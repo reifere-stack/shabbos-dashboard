@@ -248,6 +248,11 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .hour-col .hour-temp.now { color: #fff; }
+.hour-col .hour-precip {
+  font-size: 9px; font-weight: 600;
+  color: #42A5F5;
+  min-height: 12px;
+}
 
 /* === SCORES === */
 #scores-section {
@@ -852,7 +857,7 @@ html, body {
       const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + currentLat +
         '&longitude=' + currentLon +
         '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code' +
-        '&hourly=temperature_2m,weather_code' +
+        '&hourly=temperature_2m,weather_code,precipitation_probability' +
         '&daily=temperature_2m_max,temperature_2m_min,weather_code' +
         '&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=2&timezone=America/New_York';
       const r = await fetch(url);
@@ -883,6 +888,7 @@ html, body {
     const times = hourly.time || [];
     const temps = hourly.temperature_2m || [];
     const codes = hourly.weather_code || [];
+    const precip = hourly.precipitation_probability || [];
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -901,10 +907,12 @@ html, body {
       const isNow = (i === startIdx);
       const label = isNow ? 'Now' : (hr === 0 ? '12AM' : hr < 12 ? hr + 'AM' : hr === 12 ? '12PM' : (hr-12) + 'PM');
       const wx = WX[codes[i]] || ['', '🌡'];
+      const pct = precip[i] || 0;
       h += '<div class="hour-col">' +
         '<span class="hour-time' + (isNow ? ' now' : '') + '">' + label + '</span>' +
         '<span class="hour-icon">' + wx[1] + '</span>' +
         '<span class="hour-temp' + (isNow ? ' now' : '') + '">' + Math.round(temps[i]) + '°</span>' +
+        '<span class="hour-precip">' + (pct >= 10 ? '💧' + pct + '%' : '') + '</span>' +
         '</div>';
     }
     $('hourly-forecast').innerHTML = h;

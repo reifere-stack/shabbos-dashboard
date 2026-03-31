@@ -614,8 +614,10 @@ html, body {
   let lockTimer = null;
   let newsScrollPos = 0;
   let scoresScrollPos = 0;
+  let hourlyScrollPos = 0;
   let newsPaused = false;
   let scoresPaused = false;
+  let hourlyPaused = false;
   let wakeLock = null;
 
   // ============ DOM ============
@@ -1021,6 +1023,20 @@ html, body {
         setTimeout(() => { scoresScrollPos = 0; scoresScrollEl.scrollTop = 0; scoresPaused = false; }, SCROLL_PAUSE);
       }
       scoresScrollEl.scrollTop = scoresScrollPos;
+    }, SCROLL_TICK);
+
+    // Hourly forecast horizontal auto-scroll
+    const hourlyEl = $('hourly-forecast');
+    setInterval(() => {
+      if (hourlyPaused) return;
+      const max = hourlyEl.scrollWidth - hourlyEl.clientWidth;
+      if (max <= 0) return;
+      hourlyScrollPos += SCROLL_SPEED * 0.5;
+      if (hourlyScrollPos >= max) {
+        hourlyPaused = true;
+        setTimeout(() => { hourlyScrollPos = 0; hourlyEl.scrollLeft = 0; hourlyPaused = false; }, SCROLL_PAUSE);
+      }
+      hourlyEl.scrollLeft = hourlyScrollPos;
     }, SCROLL_TICK);
   }
 

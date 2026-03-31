@@ -157,18 +157,10 @@ html, body {
   font-size: 13px; font-weight: 600;
   color: #eee; line-height: 1.35;
   margin-bottom: 3px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 .news-card .desc {
-  font-size: 11px; color: #777;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 11.5px; color: #888;
+  line-height: 1.45;
 }
 
 /* === RIGHT PANEL === */
@@ -294,22 +286,22 @@ html, body {
 .score-card .team.away { justify-content: flex-end; flex-direction: row-reverse; }
 .score-card .team.home { justify-content: flex-start; }
 .score-card .team-logo {
-  width: 40px; height: 40px;
+  width: 48px; height: 48px;
   border-radius: 4px;
   object-fit: contain;
   flex-shrink: 0;
 }
 .score-card .team-info {
   display: flex; flex-direction: column;
-  min-width: 0;
+  min-width: 0; max-width: 100%;
 }
 .score-card .team.away .team-info { align-items: flex-end; }
 .score-card .team-name {
-  font-size: 11px; font-weight: 600; color: #ccc;
+  font-size: 14px; font-weight: 600; color: #ccc;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .score-card .team-score {
-  font-size: 28px; font-weight: 800;
+  font-size: 32px; font-weight: 800;
   color: #eee;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -699,22 +691,37 @@ html, body {
 
     for (const it of items) {
       if (it.category === 'parashat') parashat = it.title || '';
-      if (it.category === 'holiday') holiday = it.title || '';
-      if (it.category === 'candles') candles.push(fmt12(new Date(it.date)));
+      // Only grab yomtov holidays (not fasts like Ta'anit Bechorot)
+      if (it.category === 'holiday' && it.yomtov === true && !holiday) holiday = it.title || '';
+      if (it.category === 'candles') {
+        const time = fmt12(new Date(it.date));
+        const label = it.memo || 'Erev Shabbos';
+        candles.push({ time, label });
+      }
       if (it.category === 'havdalah') havdalah = fmt12(new Date(it.date));
     }
 
+    // Build headline
     if (holiday) {
-      parshaEl.textContent = 'Lekavod ' + holiday;
+      // Clean up holiday name: "Pesach I" -> just "Pesach" for the main headline
+      const cleanHoliday = holiday.replace(/\s+(I|II|III|IV|V|VI|VII)$/,'').replace(/\s*\(CH.*\)$/i,'');
+      if (parashat) {
+        parshaEl.textContent = 'Lekavod Shabbos ' + parashat.replace('Parashat ','Parshas ') + ' / ' + cleanHoliday;
+      } else {
+        parshaEl.textContent = 'Lekavod ' + cleanHoliday;
+      }
     } else if (parashat) {
       parshaEl.textContent = 'Lekavod Shabbos ' + parashat.replace('Parashat ', 'Parshas ');
     } else {
       parshaEl.textContent = 'Lekavod Shabbos';
     }
 
+    // Build candle lighting + havdalah row
     let h = '';
+    const multiDay = candles.length > 1;
     for (const c of candles) {
-      h += '<div class="time-item"><span class="icon candle-icon">🕯</span> Candles <strong>' + c + '</strong></div>';
+      const dayLabel = multiDay ? esc(c.label) + ' ' : 'Hadlakas Neiros ';
+      h += '<div class="time-item"><span class="icon candle-icon">🕯</span> ' + dayLabel + '<strong>' + c.time + '</strong></div>';
     }
     if (havdalah) {
       h += '<div class="time-item"><span class="icon moon-icon">🌙</span> Havdalah <strong>' + havdalah + '</strong></div>';
@@ -782,7 +789,13 @@ html, body {
   function stripTags(s) {
     const el = document.createElement('div');
     el.innerHTML = s;
-    return (el.textContent || '').trim();
+    let text = (el.textContent || '').trim();
+    // Google News descriptions are messy concatenations — take only the first coherent sentence
+    // Remove source attributions like "CNN" "AP News" etc jammed together
+    text = text.replace(/\s{2,}/g, ' ');
+    // Cap at ~400 chars for fuller summaries
+    if (text.length > 400) text = text.substring(0, 400).replace(/\s+\S*$/, '') + '…';
+    return text;
   }
 
   function esc(s) {

@@ -217,6 +217,37 @@ html, body {
 #weather-details .detail span {
   color: #aaa; font-weight: 500;
 }
+#hourly-forecast {
+  display: flex; gap: 0; margin-top: 8px;
+  border-top: 1px solid #151515;
+  padding-top: 8px;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding-bottom: 4px;
+}
+#hourly-forecast::-webkit-scrollbar { display: none; }
+.hour-col {
+  flex: 0 0 auto;
+  width: 52px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+}
+.hour-col .hour-time {
+  font-size: 10px; color: #666;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.hour-col .hour-time.now { color: #4FC3F7; }
+.hour-col .hour-icon {
+  font-size: 18px; line-height: 1;
+}
+.hour-col .hour-temp {
+  font-size: 14px; font-weight: 600;
+  color: #ddd;
+  font-variant-numeric: tabular-nums;
+}
+.hour-col .hour-temp.now { color: #fff; }
 
 /* === SCORES === */
 #scores-section {
@@ -494,6 +525,7 @@ html, body {
           <div class="detail">High <span id="weather-high">--</span>° / Low <span id="weather-low">--</span>°</div>
           <div class="detail">Humidity <span id="weather-humidity">--</span>%</div>
         </div>
+        <div id="hourly-forecast"></div>
       </div>
 
       <div id="scores-section">
@@ -818,8 +850,9 @@ html, body {
       const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + currentLat +
         '&longitude=' + currentLon +
         '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code' +
+        '&hourly=temperature_2m,weather_code' +
         '&daily=temperature_2m_max,temperature_2m_min,weather_code' +
-        '&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=1&timezone=America/New_York';
+        '&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=2&timezone=America/New_York';
       const r = await fetch(url);
       const d = await r.json();
       renderWeather(d);
@@ -842,6 +875,37 @@ html, body {
     $('weather-high').textContent = Math.round((dy.temperature_2m_max || [0])[0]);
     $('weather-low').textContent = Math.round((dy.temperature_2m_min || [0])[0]);
     $('weather-humidity').textContent = Math.round(c.relative_humidity_2m || 0);
+
+    // Hourly forecast — next 24 hours
+    const hourly = d.hourly || {};
+    const times = hourly.time || [];
+    const temps = hourly.temperature_2m || [];
+    const codes = hourly.weather_code || [];
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    // Find the index for the current hour
+    const nowStr = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0') + 'T' +
+      String(currentHour).padStart(2,'0') + ':00';
+    let startIdx = times.indexOf(nowStr);
+    if (startIdx < 0) startIdx = 0;
+
+    let h = '';
+    for (let i = startIdx; i < Math.min(startIdx + 24, times.length); i++) {
+      const dt = new Date(times[i]);
+      const hr = dt.getHours();
+      const isNow = (i === startIdx);
+      const label = isNow ? 'Now' : (hr === 0 ? '12AM' : hr < 12 ? hr + 'AM' : hr === 12 ? '12PM' : (hr-12) + 'PM');
+      const wx = WX[codes[i]] || ['', '🌡'];
+      h += '<div class="hour-col">' +
+        '<span class="hour-time' + (isNow ? ' now' : '') + '">' + label + '</span>' +
+        '<span class="hour-icon">' + wx[1] + '</span>' +
+        '<span class="hour-temp' + (isNow ? ' now' : '') + '">' + Math.round(temps[i]) + '°</span>' +
+        '</div>';
+    }
+    $('hourly-forecast').innerHTML = h;
   }
 
   // ============ SCORES ============

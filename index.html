@@ -172,55 +172,55 @@ html, body {
 
 /* === WEATHER === */
 #weather-section {
-  padding: 8px 14px 10px;
+  padding: 4px 14px 6px;
   border-bottom: 1px solid #1a1a1a;
   flex-shrink: 0;
 }
 #weather-main {
-  display: flex; align-items: center; gap: 12px;
-  margin-top: 6px;
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 2px;
 }
 #weather-main .temp-group {
   display: flex; align-items: flex-start;
 }
 #weather-main .temp {
-  font-size: 42px; font-weight: 300;
+  font-size: 30px; font-weight: 300;
   color: #eee;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 #weather-main .temp-unit {
-  font-size: 16px; font-weight: 400;
+  font-size: 13px; font-weight: 400;
   color: #555;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 #weather-main .weather-icon {
-  font-size: 32px;
+  font-size: 24px;
   line-height: 1;
 }
 #weather-main .weather-desc {
   flex: 1;
 }
 #weather-main .weather-desc .condition {
-  font-size: 14px; font-weight: 500; color: #ccc;
+  font-size: 12px; font-weight: 500; color: #ccc;
 }
 #weather-main .weather-desc .location {
-  font-size: 10px; color: #555; margin-top: 1px;
+  font-size: 9px; color: #555; margin-top: 1px;
 }
 #weather-details {
-  display: flex; gap: 16px;
-  margin-top: 6px;
+  display: flex; gap: 14px;
+  margin-top: 3px;
 }
 #weather-details .detail {
-  font-size: 10px; color: #666;
+  font-size: 9px; color: #666;
 }
 #weather-details .detail span {
   color: #aaa; font-weight: 500;
 }
 #hourly-forecast {
-  display: flex; gap: 0; margin-top: 8px;
+  display: flex; gap: 0; margin-top: 5px;
   border-top: 1px solid #151515;
-  padding-top: 8px;
+  padding-top: 5px;
   overflow-x: auto; overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
@@ -240,18 +240,18 @@ html, body {
 }
 .hour-col .hour-time.now { color: #4FC3F7; }
 .hour-col .hour-icon {
-  font-size: 18px; line-height: 1;
+  font-size: 15px; line-height: 1;
 }
 .hour-col .hour-temp {
-  font-size: 14px; font-weight: 600;
+  font-size: 12px; font-weight: 600;
   color: #ddd;
   font-variant-numeric: tabular-nums;
 }
 .hour-col .hour-temp.now { color: #fff; }
 .hour-col .hour-precip {
-  font-size: 9px; font-weight: 600;
+  font-size: 8px; font-weight: 600;
   color: #42A5F5;
-  min-height: 12px;
+  min-height: 10px;
 }
 
 /* === SCORES === */
@@ -510,8 +510,8 @@ html, body {
     <!-- Right: Weather + Scores -->
     <div id="right-panel">
       <div id="weather-section">
-        <div class="section-header" style="padding-left:0; border-bottom:none; padding-bottom:0;">
-          <span class="hdr-icon">🌡</span>
+        <div class="section-header" style="padding-left:0; border-bottom:none; padding-bottom:0; padding-top:3px; padding-bottom:2px;">
+          <span class="hdr-icon" style="font-size:11px">🌡</span>
           <span class="hdr-label cyan">WEATHER</span>
         </div>
         <div id="weather-main">

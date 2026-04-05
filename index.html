@@ -88,7 +88,7 @@ html, body {
   font-size: 9px; color: #444; white-space: nowrap;
 }
 #top-bar .visitors-label {
-  font-size: 9px; color: #2e6e4e; white-space: nowrap;
+  font-size: 9px; color: #4a9a6a; white-space: nowrap;
   display: none;
 }
 #top-bar .visitors-label.show { display: inline; }
@@ -666,6 +666,11 @@ html, body {
   'use strict';
 
   // ============ CONFIG ============
+  // RSS Proxy — set this to your Cloudflare Worker URL after deploying
+  // e.g. 'https://shabbos-rss-proxy.YOUR-NAME.workers.dev'
+  // Leave as '' to use rss2json.com directly (fine for low traffic)
+  const RSS_PROXY_URL = '';
+
   const DEFAULT_ZIP = '10952';
   const DEFAULT_LAT = 41.11;
   const DEFAULT_LON = -74.05;
@@ -820,16 +825,29 @@ html, body {
     updatedEl.textContent = 'Updated ' + h + ':' + mn + ' ' + ap;
   }
 
-  // ============ VISITOR COUNT (daily hit counter) ============
-  async function fetchVisitorCount() {
-    try {
-      const r = await fetch('https://api.countapi.xyz/hit/shabbos-dashboard-reifere/visits');
-      const d = await r.json();
-      if (d && d.value) {
-        visitorsEl.textContent = d.value + ' visits today';
-        visitorsEl.classList.add('show');
-      }
-    } catch { /* silent */ }
+  // ============ VISITOR COUNT (hits.sh badge — auto-increments on page load) ============
+  function fetchVisitorCount() {
+    // hits.sh: embed as invisible img to register the hit, then read SVG text
+    const img = new Image();
+    const badgeUrl = 'https://hits.sh/reifere-stack.github.io/shabbos-dashboard.svg';
+    img.onload = () => {
+      // Fetch SVG text to extract the count
+      fetch(badgeUrl)
+        .then(r => r.text())
+        .then(svg => {
+          const m = svg.match(/>([\d,]+)<\/text>/g);
+          if (m && m.length >= 2) {
+            // Last number in SVG is the count
+            const last = m[m.length - 1].replace(/<[^>]+>/g, '');
+            if (last && parseInt(last) > 0) {
+              visitorsEl.textContent = '👁 ' + parseInt(last).toLocaleString() + ' views';
+              visitorsEl.classList.add('show');
+            }
+          }
+        })
+        .catch(() => {});
+    };
+    img.src = badgeUrl + '?t=' + Date.now();
   }
 
   // ============ FETCH ALL ============
@@ -909,11 +927,12 @@ html, body {
     }
 
     const results = await Promise.allSettled(
-      active.map(feed =>
-        fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url))
-          .then(r => r.json())
-          .then(d => ({ feed, d }))
-      )
+      active.map(feed => {
+        const apiUrl = RSS_PROXY_URL
+          ? RSS_PROXY_URL + '/rss?url=' + encodeURIComponent(feed.url)
+          : 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url);
+        return fetch(apiUrl).then(r => r.json()).then(d => ({ feed, d }));
+      })
     );
 
     let html = '';
@@ -1125,13 +1144,18 @@ html, body {
     const gameDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const diff = (gameDay - today) / 86400000;
     const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const timeStr = fmt12(d);
     if (diff === 0) return 'Today · ' + timeStr;
     if (diff === 1) return 'Tomorrow · ' + timeStr;
-    if (diff === -1) return 'Yesterday';
-    if (diff < 0) return months[d.getMonth()] + ' ' + d.getDate();
+    if (diff === -1) return 'Yesterday · ' + timeStr;
+    if (diff < -1) return fmtShortDate(d);
     return days[d.getDay()] + ' · ' + timeStr;
+  }
+
+  function fmtShortDate(d) {
+    if (!d) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[d.getMonth()] + ' ' + d.getDate();
   }
 
   function renderScores(games) {
@@ -1150,7 +1174,8 @@ html, body {
       const pre = g.state === 'pre';
       const awCls = post && g.home.winner ? ' loser' : '';
       const hmCls = post && g.away.winner ? ' loser' : '';
-      const dateStr = pre ? formatGameDate(g.gameDate) : '';
+      // Show date for upcoming games, and for finals show when game was played
+      const dateStr = pre ? formatGameDate(g.gameDate) : (post && g.gameDate ? fmtShortDate(g.gameDate) : '');
 
       h += '<div class="score-card">' +
         '<div class="card-top">' +

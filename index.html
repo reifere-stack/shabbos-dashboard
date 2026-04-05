@@ -674,7 +674,7 @@ html, body {
     setInterval(updateClock, 1000);
     fetchAll();
     setInterval(() => {
-      newsCategory = (newsCategory + 1) % 3;
+      newsCategory = (newsCategory + 1) % NEWS_FEEDS.length;
       fetchAll();
     }, REFRESH_MS);
     setupSettings();
@@ -803,9 +803,13 @@ html, body {
     'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
     'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',
     'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',
+    'https://www.wired.com/feed/rss',
+    'https://techcrunch.com/feed/',
+    'https://www.sciencedaily.com/rss/all.xml',
+    'https://www.theyeshivaworld.com/feed',
   ];
-  const NEWS_TITLES = ['WORLD NEWS', 'TECH NEWS', 'SCIENCE NEWS'];
-  const NEWS_ICONS = ['🌍', '💻', '🔬'];
+  const NEWS_TITLES = ['WORLD NEWS', 'TECH NEWS', 'SCIENCE NEWS', 'WIRED', 'TECHCRUNCH', 'SCIENCE DAILY', 'YWN'];
+  const NEWS_ICONS = ['🌍', '💻', '🔬', '⚡', '🚀', '🧬', '✡️'];
 
   async function fetchNews() {
     newsLabel.textContent = NEWS_TITLES[newsCategory];
@@ -817,7 +821,9 @@ html, body {
       const r = await fetch(url);
       const d = await r.json();
       if (d.status === 'ok' && d.items && d.items.length) {
-        renderNews(d.items);
+        const isGoogle = NEWS_FEEDS[newsCategory].includes('news.google.com');
+        const feedSource = (d.feed && d.feed.title) ? d.feed.title : '';
+        renderNews(d.items, isGoogle, feedSource);
       } else {
         newsInner.innerHTML = '<div class="no-data"><div class="nd-icon">📰</div>News unavailable right now</div>';
       }
@@ -826,14 +832,22 @@ html, body {
     }
   }
 
-  function renderNews(items) {
+  function renderNews(items, isGoogle, feedSource) {
     let h = '';
     for (const it of items) {
-      const parsed = splitNewsTitle(it.title || '');
+      let source, headline;
+      if (isGoogle) {
+        const parsed = splitNewsTitle(it.title || '');
+        source = parsed.source;
+        headline = parsed.headline;
+      } else {
+        source = it.author || feedSource || '';
+        headline = it.title || '';
+      }
       const desc = stripTags(it.description || '');
       h += '<div class="news-card">' +
-        '<div class="source">' + esc(parsed.source) + '</div>' +
-        '<div class="title">' + esc(parsed.headline) + '</div>' +
+        '<div class="source">' + esc(source) + '</div>' +
+        '<div class="title">' + esc(headline) + '</div>' +
         (desc ? '<div class="desc">' + esc(desc) + '</div>' : '') +
         '</div>';
     }

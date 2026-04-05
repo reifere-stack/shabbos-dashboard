@@ -405,6 +405,88 @@ html, body {
   .hour-col .hour-temp { font-size: 11px; }
 }
 
+/* === DONATE MODAL === */
+#donate-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  display: none; align-items: center; justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+#donate-overlay.open { display: flex; }
+#donate-dialog {
+  background: #0d0d0d;
+  border: 1px solid rgba(255,213,79,0.2);
+  border-radius: 16px;
+  padding: 24px 22px 20px;
+  width: 340px;
+  max-width: 100%;
+  position: relative;
+}
+#donate-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none; border: none;
+  color: #444; font-size: 20px;
+  cursor: pointer; line-height: 1;
+  padding: 4px;
+}
+#donate-close:hover { color: #888; }
+#donate-dialog .donate-title {
+  font-size: 15px; font-weight: 700;
+  color: #FFD54F;
+  text-align: center;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+#donate-dialog .donate-subtitle {
+  font-size: 11px; color: #666;
+  text-align: center;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.donate-org-list {
+  display: flex; flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.donate-org {
+  display: flex; align-items: center;
+  background: #111;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-decoration: none;
+  gap: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.donate-org:hover { border-color: #FFD54F; background: #151505; }
+.donate-org .org-icon { font-size: 22px; flex-shrink: 0; }
+.donate-org .org-info { flex: 1; min-width: 0; }
+.donate-org .org-name {
+  font-size: 13px; font-weight: 700;
+  color: #ddd; display: block;
+}
+.donate-org .org-desc {
+  font-size: 10px; color: #555;
+  margin-top: 1px; display: block;
+}
+.donate-org .org-arrow {
+  font-size: 14px; color: #333; flex-shrink: 0;
+}
+.donate-org:hover .org-arrow { color: #FFD54F; }
+.donate-skip {
+  width: 100%;
+  background: none; border: none;
+  color: #333; font-size: 10px;
+  text-align: center; cursor: pointer;
+  padding: 4px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.donate-skip:hover { color: #666; }
+
 /* === SETTINGS MODAL === */
 #settings-overlay {
   position: fixed; inset: 0;
@@ -639,6 +721,17 @@ html, body {
   </div>
 </div>
 
+<!-- Donate Modal -->
+<div id="donate-overlay">
+  <div id="donate-dialog">
+    <button id="donate-close" aria-label="Close">×</button>
+    <div class="donate-title">❤️ This app is free — please consider giving back</div>
+    <div class="donate-subtitle">If this dashboard brings value to your Shabbos table,<br>consider supporting one of these organizations:</div>
+    <div class="donate-org-list" id="donate-org-list"></div>
+    <button class="donate-skip" id="donate-skip">Maybe later</button>
+  </div>
+</div>
+
 <!-- Settings Overlay -->
 <div id="settings-overlay">
   <div id="settings-dialog">
@@ -664,6 +757,30 @@ html, body {
 <script>
 (function() {
   'use strict';
+
+  // ============ DONATE ORGS — add more here anytime ============
+  const DONATE_ORGS = [
+    {
+      icon: '💙',
+      name: 'Chai Lifeline',
+      desc: 'Supporting children with serious illness & their families',
+      url: 'https://www.chailifeline.org/donate',
+    },
+    {
+      icon: '❤️',
+      name: 'Bonei Olam',
+      desc: 'Helping Jewish families overcome infertility',
+      url: 'https://www.boneiolam.org/donate',
+    },
+    {
+      icon: '🥐',
+      name: 'Tomchei Shabbos',
+      desc: 'Delivering Shabbos packages to families in need',
+      url: 'https://www.tomcheishabbos.org/donate',
+    },
+    // ---- Add more orgs below this line ----
+    // { icon: '📚', name: 'Your Yeshiva', desc: 'Description here', url: 'https://...' },
+  ];
 
   // ============ CONFIG ============
   // RSS Proxy — set this to your Cloudflare Worker URL after deploying
@@ -767,6 +884,7 @@ html, body {
     startScroll();
     acquireWakeLock();
     fetchVisitorCount();
+    setupDonate();
   }
 
   // ============ HASH — stores zip + enabled feeds ============
@@ -1243,6 +1361,42 @@ html, body {
       }
       hourlyEl.scrollLeft = hourlyPos;
     }, SCROLL_TICK);
+  }
+
+  // ============ DONATE ============
+  function setupDonate() {
+    const overlay = $('donate-overlay');
+    const orgList = $('donate-org-list');
+
+    // Build org list from config
+    orgList.innerHTML = '';
+    for (const org of DONATE_ORGS) {
+      const a = document.createElement('a');
+      a.className = 'donate-org';
+      a.href = org.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.innerHTML =
+        '<span class="org-icon">' + org.icon + '</span>' +
+        '<span class="org-info">' +
+          '<span class="org-name">' + esc(org.name) + '</span>' +
+          '<span class="org-desc">' + esc(org.desc) + '</span>' +
+        '</span>' +
+        '<span class="org-arrow">›</span>';
+      orgList.appendChild(a);
+    }
+
+    // Show on every visit (dismissed by X or "maybe later")
+    // Small delay so dashboard loads first
+    setTimeout(() => overlay.classList.add('open'), 1200);
+
+    function closeDonate() { overlay.classList.remove('open'); }
+    $('donate-close').addEventListener('click', closeDonate);
+    $('donate-skip').addEventListener('click', closeDonate);
+    // Clicking backdrop also closes
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeDonate();
+    });
   }
 
   // ============ SETTINGS ============

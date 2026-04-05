@@ -1386,14 +1386,22 @@ html, body {
       orgList.appendChild(a);
     }
 
-    // Show on every visit (dismissed by X or "maybe later")
-    // Small delay so dashboard loads first
-    setTimeout(() => overlay.classList.add('open'), 1200);
+    // Show once per calendar day — won't bother you again until tomorrow
+    const today = new Date().toDateString();
+    const lastSeen = sessionStorage.getItem('donate_seen_date');
+    const shouldShow = lastSeen !== today;
 
-    function closeDonate() { overlay.classList.remove('open'); }
+    if (shouldShow) {
+      setTimeout(() => overlay.classList.add('open'), 1200);
+    }
+
+    function closeDonate() {
+      overlay.classList.remove('open');
+      // Remember dismissed for the rest of today
+      sessionStorage.setItem('donate_seen_date', today);
+    }
     $('donate-close').addEventListener('click', closeDonate);
     $('donate-skip').addEventListener('click', closeDonate);
-    // Clicking backdrop also closes
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) closeDonate();
     });

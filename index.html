@@ -825,29 +825,18 @@ html, body {
     updatedEl.textContent = 'Updated ' + h + ':' + mn + ' ' + ap;
   }
 
-  // ============ VISITOR COUNT (hits.sh badge — auto-increments on page load) ============
+  // ============ VISITOR COUNT ============
   function fetchVisitorCount() {
-    // hits.sh: embed as invisible img to register the hit, then read SVG text
-    const img = new Image();
-    const badgeUrl = 'https://hits.sh/reifere-stack.github.io/shabbos-dashboard.svg';
-    img.onload = () => {
-      // Fetch SVG text to extract the count
-      fetch(badgeUrl)
-        .then(r => r.text())
-        .then(svg => {
-          const m = svg.match(/>([\d,]+)<\/text>/g);
-          if (m && m.length >= 2) {
-            // Last number in SVG is the count
-            const last = m[m.length - 1].replace(/<[^>]+>/g, '');
-            if (last && parseInt(last) > 0) {
-              visitorsEl.textContent = '👁 ' + parseInt(last).toLocaleString() + ' views';
-              visitorsEl.classList.add('show');
-            }
-          }
-        })
-        .catch(() => {});
-    };
-    img.src = badgeUrl + '?t=' + Date.now();
+    fetch('https://api.counterapi.dev/v1/shabbos-dashboard/visits/up')
+      .then(r => r.json())
+      .then(d => {
+        const count = d.count || d.value || d.hits || 0;
+        if (count > 0) {
+          visitorsEl.textContent = '\ud83d\udc41 ' + Number(count).toLocaleString() + ' views';
+          visitorsEl.classList.add('show');
+        }
+      })
+      .catch(() => {});
   }
 
   // ============ FETCH ALL ============

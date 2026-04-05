@@ -1386,21 +1386,15 @@ html, body {
       orgList.appendChild(a);
     }
 
-    // Show once per calendar day — stored in URL hash so it persists across refreshes
-    const today = new Date().toDateString();
-    const hashParams = new URLSearchParams(location.hash.slice(1).replace(/zip=\d{5}/, '').replace(/feeds=[^&]+/, '').replace(/^&+|&+$/g, ''));
-    const donateSeenDate = hashParams.get('ds');
-    const shouldShow = donateSeenDate !== today;
-
-    if (shouldShow) {
+    // Show once per session — after "maybe later", it never comes back
+    // until the browser tab is fully closed and reopened
+    if (!window.__donateDismissed) {
       setTimeout(() => overlay.classList.add('open'), 1200);
     }
 
     function closeDonate() {
       overlay.classList.remove('open');
-      // Append ds=today to the hash without disturbing zip/feeds params
-      const h = location.hash.replace(/[&?]?ds=[^&]*/g, '');
-      location.hash = h + (h.includes('=') ? '&' : '') + 'ds=' + encodeURIComponent(today);
+      window.__donateDismissed = true;
     }
     $('donate-close').addEventListener('click', closeDonate);
     $('donate-skip').addEventListener('click', closeDonate);

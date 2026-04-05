@@ -87,6 +87,11 @@ html, body {
 #top-bar .updated-label {
   font-size: 9px; color: #444; white-space: nowrap;
 }
+#top-bar .visitors-label {
+  font-size: 9px; color: #2e6e4e; white-space: nowrap;
+  display: none;
+}
+#top-bar .visitors-label.show { display: inline; }
 #top-bar .clock {
   font-size: 14px; font-weight: 600;
   color: #eee;
@@ -134,17 +139,20 @@ html, body {
 .section-header .hdr-label.cyan { color: #4FC3F7; }
 .section-header .hdr-label.amber { color: #FFB74D; }
 
-#news-scroll {
+/* Infinite scroll container — uses clone trick */
+.scroll-outer {
   flex: 1;
   overflow: hidden;
   position: relative;
+  min-height: 0;
 }
-#news-scroll-inner {
-  padding: 6px 14px 80px 14px;
+.scroll-track {
+  /* moves via transform for smooth infinite loop */
+  will-change: transform;
 }
 
 .news-card {
-  padding: 8px 0;
+  padding: 8px 14px;
   border-bottom: 1px solid #111;
 }
 .news-card .source {
@@ -161,6 +169,19 @@ html, body {
 .news-card .desc {
   font-size: 11.5px; color: #888;
   line-height: 1.45;
+}
+/* Source divider between feed sections */
+.feed-divider {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px 5px;
+  background: #060606;
+  border-bottom: 1px solid #111;
+}
+.feed-divider .feed-icon { font-size: 12px; }
+.feed-divider .feed-name {
+  font-size: 9px; font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 /* === RIGHT PANEL === */
@@ -264,23 +285,24 @@ html, body {
   flex: 1;
   overflow: hidden;
   position: relative;
-}
-#scores-scroll-inner {
-  padding: 6px 14px 80px 14px;
+  min-height: 0;
 }
 
 .score-card {
   background: #080808;
   border: 1px solid #1a1a1a;
   border-radius: 8px;
-  margin-bottom: 6px;
+  margin: 4px 10px;
   overflow: hidden;
 }
 .score-card .card-top {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 4px 10px;
+  padding: 3px 10px;
   background: #0c0c0c;
   border-bottom: 1px solid #151515;
+}
+.score-card .card-top-left {
+  display: flex; align-items: center; gap: 6px;
 }
 .score-card .league-badge {
   font-size: 9px; font-weight: 800;
@@ -293,6 +315,10 @@ html, body {
 .league-nba { background: rgba(255,152,0,0.15); color: #FF9800; }
 .league-nhl { background: rgba(33,150,243,0.15); color: #2196F3; }
 .league-mlb { background: rgba(244,67,54,0.15); color: #F44336; }
+.score-card .game-date {
+  font-size: 8px; color: #444;
+  white-space: nowrap;
+}
 .score-card .game-status {
   font-size: 9px; color: #666;
   display: flex; align-items: center; gap: 4px;
@@ -311,18 +337,18 @@ html, body {
 
 .score-card .matchup {
   display: flex; align-items: center;
-  padding: 6px 10px;
-  gap: 6px;
+  padding: 5px 8px;
+  gap: 5px;
 }
 .score-card .team {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 6px;
   flex: 1;
   min-width: 0;
 }
 .score-card .team.away { justify-content: flex-end; flex-direction: row-reverse; }
 .score-card .team.home { justify-content: flex-start; }
 .score-card .team-logo {
-  width: 48px; height: 48px;
+  width: 40px; height: 40px;
   border-radius: 4px;
   object-fit: contain;
   flex-shrink: 0;
@@ -333,20 +359,25 @@ html, body {
 }
 .score-card .team.away .team-info { align-items: flex-end; }
 .score-card .team-name {
-  font-size: 14px; font-weight: 600; color: #ccc;
+  font-size: 12px; font-weight: 600; color: #ccc;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.score-card .team-record {
+  font-size: 9px; color: #3a3a3a; font-weight: 500;
+  margin-top: 0px;
+}
 .score-card .team-score {
-  font-size: 32px; font-weight: 800;
+  font-size: 28px; font-weight: 800;
   color: #eee;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
-.score-card .team.loser .team-name { color: #444; }
-.score-card .team.loser .team-score { color: #444; }
+.score-card .team.loser .team-name { color: #333; }
+.score-card .team.loser .team-score { color: #333; }
+.score-card .team.loser .team-record { color: #282828; }
 .score-card .vs-divider {
   font-size: 10px; font-weight: 700;
-  color: #2a2a2a;
+  color: #1e1e1e;
   flex-shrink: 0;
   padding: 0 2px;
 }
@@ -358,15 +389,15 @@ html, body {
   #right-panel { width: 100%; height: 50%; }
 }
 @media (max-width: 480px), (orientation: portrait) {
-  .score-card .team-logo { width: 32px; height: 32px; }
-  .score-card .team-name { font-size: 11px; }
-  .score-card .team-score { font-size: 22px; }
-  .score-card .matchup { padding: 5px 6px; gap: 4px; }
-  .score-card .team { gap: 5px; }
+  .score-card .team-logo { width: 28px; height: 28px; }
+  .score-card .team-name { font-size: 10px; }
+  .score-card .team-score { font-size: 20px; }
+  .score-card .matchup { padding: 4px 6px; gap: 3px; }
+  .score-card .team { gap: 4px; }
   .score-card .card-top { padding: 3px 8px; }
   .score-card .league-badge { font-size: 8px; padding: 1px 5px; }
   .score-card .game-status { font-size: 8px; }
-  .score-card { margin-bottom: 4px; }
+  .score-card { margin: 3px 8px; }
   #weather-main .temp { font-size: 26px; }
   #weather-main .weather-icon { font-size: 20px; }
   .hour-col { width: 44px; }
@@ -377,23 +408,26 @@ html, body {
 /* === SETTINGS MODAL === */
 #settings-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.88);
+  background: rgba(0,0,0,0.92);
   display: none; align-items: center; justify-content: center;
   z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
 }
 #settings-overlay.open { display: flex; }
 #settings-dialog {
   background: #111; border: 1px solid #222;
   border-radius: 12px;
-  padding: 24px;
-  width: 280px;
-  text-align: center;
+  padding: 20px;
+  width: 320px;
+  max-width: 100%;
 }
 #settings-dialog h2 {
   font-size: 14px; font-weight: 700;
   color: #4FC3F7; letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 16px;
+  text-align: center;
 }
 #settings-dialog .field-label {
   font-size: 10px; color: #888;
@@ -433,6 +467,39 @@ html, body {
 #save-zip-btn:hover { background: #81D4FA; }
 #cancel-zip-btn { background: #1a1a1a; color: #777; }
 #cancel-zip-btn:hover { background: #222; }
+
+/* News source checkboxes */
+.settings-section-title {
+  font-size: 10px; color: #555; text-transform: uppercase;
+  letter-spacing: 1px; margin: 14px 0 8px;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 12px;
+}
+.news-toggle-list {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.news-toggle {
+  display: flex; align-items: center; gap: 6px;
+  background: #0a0a0a; border: 1px solid #1e1e1e;
+  border-radius: 6px; padding: 6px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.news-toggle.on { border-color: #2a4a2a; }
+.news-toggle .nt-icon { font-size: 13px; flex-shrink: 0; }
+.news-toggle .nt-name {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1px; color: #555;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.news-toggle.on .nt-name { color: #88cc88; }
+.news-toggle .nt-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #222; margin-left: auto; flex-shrink: 0;
+}
+.news-toggle.on .nt-dot { background: #4CAF50; }
 
 /* === TOUCH LOCK === */
 #lock-overlay {
@@ -475,7 +542,7 @@ html, body {
 .skel-line.w60 { width: 60%; }
 .skel-line.w40 { width: 40%; }
 .skel-line.tall { height: 16px; margin-bottom: 10px; }
-.skel-block { height: 72px; border-radius: 8px; margin-bottom: 6px; }
+.skel-block { height: 72px; border-radius: 8px; margin: 4px 10px; }
 
 /* === EMPTY / NO DATA === */
 .no-data {
@@ -502,6 +569,7 @@ html, body {
   <div id="top-bar">
     <div class="brand">SHABBOS DASHBOARD</div>
     <div class="right-section">
+      <span class="visitors-label" id="visitors-label"></span>
       <span class="updated-label" id="updated-label"></span>
       <span class="clock" id="clock"></span>
       <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
@@ -514,18 +582,16 @@ html, body {
     <!-- Left: News -->
     <div id="news-panel">
       <div class="section-header">
-        <span class="hdr-icon" id="news-icon">🌍</span>
-        <span class="hdr-label cyan" id="news-label">WORLD NEWS</span>
+        <span class="hdr-icon">📰</span>
+        <span class="hdr-label cyan">NEWS</span>
       </div>
-      <div id="news-scroll">
-        <div id="news-scroll-inner">
-          <div class="skeleton skel-line tall w80"></div>
-          <div class="skeleton skel-line w60"></div>
-          <div class="skeleton skel-line"></div>
-          <div style="height:12px"></div>
-          <div class="skeleton skel-line tall w80"></div>
-          <div class="skeleton skel-line w60"></div>
-          <div class="skeleton skel-line w40"></div>
+      <div class="scroll-outer" id="news-outer">
+        <div class="scroll-track" id="news-track">
+          <div style="padding:8px 0">
+            <div class="skeleton skel-line tall w80" style="margin:0 14px 8px"></div>
+            <div class="skeleton skel-line w60" style="margin:0 14px 8px"></div>
+            <div class="skeleton skel-line" style="margin:0 14px 8px"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -561,8 +627,8 @@ html, body {
           <span class="hdr-icon">🏆</span>
           <span class="hdr-label amber">SCORES</span>
         </div>
-        <div id="scores-scroll">
-          <div id="scores-scroll-inner">
+        <div class="scroll-outer" id="scores-outer">
+          <div class="scroll-track" id="scores-track">
             <div class="skeleton skel-block"></div>
             <div class="skeleton skel-block"></div>
             <div class="skeleton skel-block"></div>
@@ -580,6 +646,8 @@ html, body {
     <div class="field-label">ZIP Code</div>
     <div class="current-zip" id="current-zip-label">Current: 10952</div>
     <input type="text" id="zip-input" maxlength="5" placeholder="10952" inputmode="numeric" pattern="[0-9]*">
+    <div class="settings-section-title">News Sources</div>
+    <div class="news-toggle-list" id="news-toggle-list"></div>
     <div class="settings-btns">
       <button id="cancel-zip-btn">Cancel</button>
       <button id="save-zip-btn">Save</button>
@@ -602,9 +670,22 @@ html, body {
   const DEFAULT_LAT = 41.11;
   const DEFAULT_LON = -74.05;
   const REFRESH_MS = 60 * 60 * 1000; // 60 minutes
-  const SCROLL_SPEED = 0.5;
-  const SCROLL_TICK = 50;
-  const SCROLL_PAUSE = 3000;
+  const SCROLL_SPEED = 0.5; // px per tick
+  const SCROLL_TICK = 50;   // ms
+
+  // All available news feeds
+  const ALL_FEEDS = [
+    { id: 'gnews',    icon: '🌍', name: 'World',       url: 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en', google: true },
+    { id: 'gtech',    icon: '💻', name: 'Tech',        url: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en', google: true },
+    { id: 'gsci',     icon: '🔬', name: 'Science',     url: 'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en', google: true },
+    { id: 'wired',    icon: '⚡', name: 'Wired',       url: 'https://www.wired.com/feed/rss', google: false },
+    { id: 'tc',       icon: '🚀', name: 'TechCrunch',  url: 'https://techcrunch.com/feed/', google: false },
+    { id: 'scidaily', icon: '🧬', name: 'Sci Daily',   url: 'https://www.sciencedaily.com/rss/all.xml', google: false },
+    { id: 'ywn',      icon: '✡️', name: 'YWN',         url: 'https://www.theyeshivaworld.com/feed', google: false },
+    { id: 'vin',      icon: '🕍', name: 'VIN',         url: 'https://vinnews.com/feed', google: false },
+    { id: 'npr',      icon: '📻', name: 'NPR',         url: 'https://feeds.npr.org/1001/rss.xml', google: false },
+    { id: 'bbc',      icon: '🇬🇧', name: 'BBC',        url: 'https://feeds.bbci.co.uk/news/rss.xml', google: false },
+  ];
 
   const ZIP_COORDS = {
     '10952': { lat: 41.11, lon: -74.05, name: 'Monsey, NY' },
@@ -637,29 +718,30 @@ html, body {
   let currentLat = DEFAULT_LAT;
   let currentLon = DEFAULT_LON;
   let locationName = 'Monsey, NY';
-  let newsCategory = 0;
+  let enabledFeeds = new Set(ALL_FEEDS.map(f => f.id)); // all on by default
   let isLocked = false;
   let lockTimer = null;
-  let newsScrollPos = 0;
-  let scoresScrollPos = 0;
-  let hourlyScrollPos = 0;
-  let newsPaused = false;
-  let scoresPaused = false;
-  let hourlyPaused = false;
   let wakeLock = null;
+
+  // Infinite scroll state
+  let newsPos = 0;
+  let scoresPos = 0;
+  let hourlyPos = 0;
+  let hourlyPaused = false;
+  let newsContentH = 0;
+  let scoresContentH = 0;
 
   // ============ DOM ============
   const $ = (id) => document.getElementById(id);
   const clockEl = $('clock');
   const updatedEl = $('updated-label');
+  const visitorsEl = $('visitors-label');
   const parshaEl = $('parsha-label');
   const timesRow = $('times-row');
-  const newsLabel = $('news-label');
-  const newsIcon = $('news-icon');
-  const newsScrollEl = $('news-scroll');
-  const newsInner = $('news-scroll-inner');
-  const scoresScrollEl = $('scores-scroll');
-  const scoresInner = $('scores-scroll-inner');
+  const newsOuter = $('news-outer');
+  const newsTrack = $('news-track');
+  const scoresOuter = $('scores-outer');
+  const scoresTrack = $('scores-track');
   const settingsOverlay = $('settings-overlay');
   const zipInput = $('zip-input');
   const currentZipLabel = $('current-zip-label');
@@ -670,24 +752,38 @@ html, body {
   // ============ INIT ============
   function init() {
     readHash();
+    buildNewsToggles();
     updateClock();
     setInterval(updateClock, 1000);
     fetchAll();
-    setInterval(() => {
-      newsCategory = (newsCategory + 1) % NEWS_FEEDS.length;
-      fetchAll();
-    }, REFRESH_MS);
+    setInterval(fetchAll, REFRESH_MS);
     setupSettings();
     setupLock();
     startScroll();
     acquireWakeLock();
+    fetchVisitorCount();
   }
 
-  // ============ HASH ============
+  // ============ HASH — stores zip + enabled feeds ============
   function readHash() {
-    const m = location.hash.match(/zip=(\d{5})/);
-    if (m) currentZip = m[1];
+    const h = location.hash.slice(1);
+    const params = new URLSearchParams(h.replace(/^zip=\d{5}/, m => 'zip=' + m.slice(4)));
+    // support both old format #zip=XXXXX and new URLSearchParams
+    const zipMatch = location.hash.match(/zip=(\d{5})/);
+    if (zipMatch) currentZip = zipMatch[1];
     applyZip(currentZip);
+
+    // Restore feed prefs from hash
+    const feedParam = h.match(/feeds=([^&]+)/);
+    if (feedParam) {
+      const ids = feedParam[1].split(',');
+      enabledFeeds = new Set(ids);
+    }
+  }
+
+  function saveHash() {
+    const feedStr = [...enabledFeeds].join(',');
+    location.hash = 'zip=' + currentZip + '&feeds=' + feedStr;
   }
 
   function applyZip(zip) {
@@ -698,8 +794,6 @@ html, body {
       currentLon = c.lon;
       locationName = c.name;
     } else {
-      // For unknown zips, attempt geocoding via Hebcal (it uses zip directly)
-      // Use defaults for weather lat/lon; user sees ZIP in location
       currentLat = DEFAULT_LAT;
       currentLon = DEFAULT_LON;
       locationName = 'ZIP ' + zip;
@@ -726,10 +820,22 @@ html, body {
     updatedEl.textContent = 'Updated ' + h + ':' + mn + ' ' + ap;
   }
 
+  // ============ VISITOR COUNT (daily hit counter) ============
+  async function fetchVisitorCount() {
+    try {
+      const r = await fetch('https://api.countapi.xyz/hit/shabbos-dashboard-reifere/visits');
+      const d = await r.json();
+      if (d && d.value) {
+        visitorsEl.textContent = d.value + ' visits today';
+        visitorsEl.classList.add('show');
+      }
+    } catch { /* silent */ }
+  }
+
   // ============ FETCH ALL ============
   function fetchAll() {
     fetchShabbos();
-    fetchNews();
+    fetchAllNews();
     fetchWeather();
     fetchScores();
     stampUpdate();
@@ -753,7 +859,6 @@ html, body {
 
     for (const it of items) {
       if (it.category === 'parashat') parashat = it.title || '';
-      // Only grab yomtov holidays (not fasts like Ta'anit Bechorot)
       if (it.category === 'holiday' && it.yomtov === true && !holiday) holiday = it.title || '';
       if (it.category === 'candles') {
         const time = fmt12(new Date(it.date));
@@ -763,12 +868,10 @@ html, body {
       if (it.category === 'havdalah') havdalah = fmt12(new Date(it.date));
     }
 
-    // Build headline
     if (holiday) {
-      // Clean up holiday name: "Pesach I" -> just "Pesach" for the main headline
-      const cleanHoliday = holiday.replace(/\s+(I|II|III|IV|V|VI|VII)$/,'').replace(/\s*\(CH.*\)$/i,'');
+      const cleanHoliday = holiday.replace(/\s+(I|II|III|IV|V|VI|VII)$/, '').replace(/\s*\(CH.*\)$/i, '');
       if (parashat) {
-        parshaEl.textContent = 'Lekavod Shabbos ' + parashat.replace('Parashat ','Parshas ') + ' / ' + cleanHoliday;
+        parshaEl.textContent = 'Lekavod Shabbos ' + parashat.replace('Parashat ', 'Parshas ') + ' / ' + cleanHoliday;
       } else {
         parshaEl.textContent = 'Lekavod ' + cleanHoliday;
       }
@@ -778,7 +881,6 @@ html, body {
       parshaEl.textContent = 'Lekavod Shabbos';
     }
 
-    // Build candle lighting + havdalah row
     let h = '';
     const multiDay = candles.length > 1;
     for (const c of candles) {
@@ -798,62 +900,81 @@ html, body {
     return (h % 12 || 12) + ':' + m + ' ' + ap;
   }
 
-  // ============ NEWS ============
-  const NEWS_FEEDS = [
-    'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
-    'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',
-    'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',
-    'https://www.wired.com/feed/rss',
-    'https://techcrunch.com/feed/',
-    'https://www.sciencedaily.com/rss/all.xml',
-    'https://www.theyeshivaworld.com/feed',
-  ];
-  const NEWS_TITLES = ['WORLD NEWS', 'TECH NEWS', 'SCIENCE NEWS', 'WIRED', 'TECHCRUNCH', 'SCIENCE DAILY', 'YWN'];
-  const NEWS_ICONS = ['🌍', '💻', '🔬', '⚡', '🚀', '🧬', '✡️'];
-
-  async function fetchNews() {
-    newsLabel.textContent = NEWS_TITLES[newsCategory];
-    newsIcon.textContent = NEWS_ICONS[newsCategory];
-
-    try {
-      const rssUrl = encodeURIComponent(NEWS_FEEDS[newsCategory]);
-      const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + rssUrl;
-      const r = await fetch(url);
-      const d = await r.json();
-      if (d.status === 'ok' && d.items && d.items.length) {
-        const isGoogle = NEWS_FEEDS[newsCategory].includes('news.google.com');
-        const feedSource = (d.feed && d.feed.title) ? d.feed.title : '';
-        renderNews(d.items, isGoogle, feedSource);
-      } else {
-        newsInner.innerHTML = '<div class="no-data"><div class="nd-icon">📰</div>News unavailable right now</div>';
-      }
-    } catch {
-      newsInner.innerHTML = '<div class="no-data"><div class="nd-icon">📰</div>News unavailable right now</div>';
+  // ============ NEWS — fetch all enabled feeds simultaneously ============
+  async function fetchAllNews() {
+    const active = ALL_FEEDS.filter(f => enabledFeeds.has(f.id));
+    if (!active.length) {
+      setNewsContent('<div class="no-data"><div class="nd-icon">📰</div>No news sources selected</div>');
+      return;
     }
+
+    const results = await Promise.allSettled(
+      active.map(feed =>
+        fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url))
+          .then(r => r.json())
+          .then(d => ({ feed, d }))
+      )
+    );
+
+    let html = '';
+    for (const res of results) {
+      if (res.status !== 'fulfilled') continue;
+      const { feed, d } = res.value;
+      if (d.status !== 'ok' || !d.items || !d.items.length) continue;
+
+      // Feed divider header
+      html += '<div class="feed-divider">' +
+        '<span class="feed-icon">' + feed.icon + '</span>' +
+        '<span class="feed-name" style="color:' + feedColor(feed.id) + '">' + esc(feed.name) + '</span>' +
+        '</div>';
+
+      for (const it of d.items) {
+        let source, headline;
+        if (feed.google) {
+          const parsed = splitNewsTitle(it.title || '');
+          source = parsed.source;
+          headline = parsed.headline;
+        } else {
+          source = it.author || (d.feed && d.feed.title) || feed.name;
+          headline = it.title || '';
+        }
+        const desc = stripTags(it.description || '');
+        html += '<div class="news-card">' +
+          '<div class="source">' + esc(source) + '</div>' +
+          '<div class="title">' + esc(headline) + '</div>' +
+          (desc ? '<div class="desc">' + esc(desc) + '</div>' : '') +
+          '</div>';
+      }
+    }
+
+    if (!html) {
+      setNewsContent('<div class="no-data"><div class="nd-icon">📰</div>News unavailable right now</div>');
+      return;
+    }
+
+    setNewsContent(html);
   }
 
-  function renderNews(items, isGoogle, feedSource) {
-    let h = '';
-    for (const it of items) {
-      let source, headline;
-      if (isGoogle) {
-        const parsed = splitNewsTitle(it.title || '');
-        source = parsed.source;
-        headline = parsed.headline;
-      } else {
-        source = it.author || feedSource || '';
-        headline = it.title || '';
-      }
-      const desc = stripTags(it.description || '');
-      h += '<div class="news-card">' +
-        '<div class="source">' + esc(source) + '</div>' +
-        '<div class="title">' + esc(headline) + '</div>' +
-        (desc ? '<div class="desc">' + esc(desc) + '</div>' : '') +
-        '</div>';
+  function feedColor(id) {
+    const colors = {
+      gnews: '#4FC3F7', gtech: '#81D4FA', gsci: '#4DB6AC',
+      wired: '#FFB74D', tc: '#FF8A65', scidaily: '#A5D6A7',
+      ywn: '#CE93D8', vin: '#F48FB1', npr: '#80CBC4', bbc: '#90CAF9'
+    };
+    return colors[id] || '#888';
+  }
+
+  function setNewsContent(html) {
+    newsTrack.innerHTML = html;
+    // For infinite scroll: duplicate content
+    newsContentH = newsTrack.scrollHeight;
+    if (newsContentH > newsOuter.clientHeight) {
+      // Clone for seamless loop
+      newsTrack.innerHTML += html;
     }
-    newsInner.innerHTML = h;
-    newsScrollPos = 0;
-    newsScrollEl.scrollTop = 0;
+    newsPos = 0;
+    newsTrack.style.transform = 'translateY(0)';
+    newsContentH = newsTrack.scrollHeight / 2; // half = one set
   }
 
   function splitNewsTitle(t) {
@@ -866,16 +987,13 @@ html, body {
     const el = document.createElement('div');
     el.innerHTML = s;
     let text = (el.textContent || '').trim();
-    // Google News descriptions are messy concatenations — take only the first coherent sentence
-    // Remove source attributions like "CNN" "AP News" etc jammed together
     text = text.replace(/\s{2,}/g, ' ');
-    // Cap at ~400 chars for fuller summaries
     if (text.length > 400) text = text.substring(0, 400).replace(/\s+\S*$/, '') + '…';
     return text;
   }
 
   function esc(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   // ============ WEATHER ============
@@ -920,26 +1038,23 @@ html, body {
     $('weather-low').textContent = Math.round((dy.temperature_2m_min || [0])[0]);
     $('weather-humidity').textContent = Math.round(c.relative_humidity_2m || 0);
 
-    // Hourly forecast — next 24 hours
+    // Hourly
     const hourly = d.hourly || {};
     const times = hourly.time || [];
     const temps = hourly.temperature_2m || [];
     const codes = hourly.weather_code || [];
     const precip = hourly.precipitation_probability || [];
     const now = new Date();
-    const currentHour = now.getHours();
-
-    // Find the index for the current hour
     const nowStr = now.getFullYear() + '-' +
       String(now.getMonth()+1).padStart(2,'0') + '-' +
       String(now.getDate()).padStart(2,'0') + 'T' +
-      String(currentHour).padStart(2,'0') + ':00';
+      String(now.getHours()).padStart(2,'0') + ':00';
     let startIdx = times.indexOf(nowStr);
     if (startIdx < 0) startIdx = 0;
 
     let h = '';
     for (let i = startIdx; i < Math.min(startIdx + 24, times.length); i++) {
-      const dt = new Date(times[i]);
+      const dt = new Date(times[i] + ':00');
       const hr = dt.getHours();
       const isNow = (i === startIdx);
       const label = isNow ? 'Now' : (hr === 0 ? '12AM' : hr < 12 ? hr + 'AM' : hr === 12 ? '12PM' : (hr-12) + 'PM');
@@ -953,6 +1068,8 @@ html, body {
         '</div>';
     }
     $('hourly-forecast').innerHTML = h;
+    hourlyPos = 0;
+    $('hourly-forecast').scrollLeft = 0;
   }
 
   // ============ SCORES ============
@@ -976,29 +1093,50 @@ html, body {
         if (!comp) continue;
         const st = comp.status || {};
         const stype = st.type || {};
+        const gameDate = comp.date ? new Date(comp.date) : null;
         let away = null, home = null;
         for (const c of (comp.competitors || [])) {
           const t = c.team || {};
+          const records = c.records || [];
+          // Overall record is usually first
+          const overallRecord = records.find(r => r.type === 'total' || r.name === 'overall') || records[0];
           const entry = {
             abbr: t.abbreviation || '???',
             name: t.shortDisplayName || t.displayName || '???',
             logo: t.logo || '',
             score: c.score || '0',
             winner: c.winner || false,
+            record: overallRecord ? overallRecord.summary : '',
           };
           if (c.homeAway === 'away') away = entry; else home = entry;
         }
         if (away && home) {
-          games.push({ league, away, home, state: stype.state || 'pre', detail: stype.shortDetail || '' });
+          games.push({ league, away, home, state: stype.state || 'pre', detail: stype.shortDetail || '', gameDate });
         }
       }
     }
     renderScores(games);
   }
 
+  function formatGameDate(d) {
+    if (!d) return '';
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const gameDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diff = (gameDay - today) / 86400000;
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const timeStr = fmt12(d);
+    if (diff === 0) return 'Today · ' + timeStr;
+    if (diff === 1) return 'Tomorrow · ' + timeStr;
+    if (diff === -1) return 'Yesterday';
+    if (diff < 0) return months[d.getMonth()] + ' ' + d.getDate();
+    return days[d.getDay()] + ' · ' + timeStr;
+  }
+
   function renderScores(games) {
     if (!games.length) {
-      scoresInner.innerHTML = '<div class="no-data"><div class="nd-icon">🏟</div>No games today</div>';
+      setScoresContent('<div class="no-data"><div class="nd-icon">🏟</div>No games today</div>');
       return;
     }
 
@@ -1009,12 +1147,17 @@ html, body {
     for (const g of games) {
       const live = g.state === 'in';
       const post = g.state === 'post';
+      const pre = g.state === 'pre';
       const awCls = post && g.home.winner ? ' loser' : '';
       const hmCls = post && g.away.winner ? ' loser' : '';
+      const dateStr = pre ? formatGameDate(g.gameDate) : '';
 
       h += '<div class="score-card">' +
         '<div class="card-top">' +
-          '<span class="league-badge ' + g.league.cls + '">' + g.league.name + '</span>' +
+          '<div class="card-top-left">' +
+            '<span class="league-badge ' + g.league.cls + '">' + g.league.name + '</span>' +
+            (dateStr ? '<span class="game-date">' + esc(dateStr) + '</span>' : '') +
+          '</div>' +
           '<span class="game-status' + (live ? ' live' : '') + '">' +
             (live ? '<span class="live-dot"></span>' : '') +
             esc(g.detail) +
@@ -1025,6 +1168,7 @@ html, body {
             '<img class="team-logo" src="' + esc(g.away.logo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' +
             '<div class="team-info">' +
               '<span class="team-name">' + esc(g.away.name) + '</span>' +
+              (g.away.record ? '<span class="team-record">' + esc(g.away.record) + '</span>' : '') +
               '<span class="team-score">' + esc(g.away.score) + '</span>' +
             '</div>' +
           '</div>' +
@@ -1033,70 +1177,99 @@ html, body {
             '<img class="team-logo" src="' + esc(g.home.logo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' +
             '<div class="team-info">' +
               '<span class="team-name">' + esc(g.home.name) + '</span>' +
+              (g.home.record ? '<span class="team-record">' + esc(g.home.record) + '</span>' : '') +
               '<span class="team-score">' + esc(g.home.score) + '</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
     }
-    scoresInner.innerHTML = h;
-    scoresScrollPos = 0;
-    scoresScrollEl.scrollTop = 0;
+    setScoresContent(h);
   }
 
-  // ============ AUTO-SCROLL ============
+  function setScoresContent(html) {
+    scoresTrack.innerHTML = html;
+    scoresContentH = scoresTrack.scrollHeight;
+    if (scoresContentH > scoresOuter.clientHeight) {
+      scoresTrack.innerHTML += html;
+    }
+    scoresPos = 0;
+    scoresTrack.style.transform = 'translateY(0)';
+    scoresContentH = scoresTrack.scrollHeight / 2;
+  }
+
+  // ============ INFINITE AUTO-SCROLL (transform-based, no jump) ============
   function startScroll() {
+    // News infinite scroll
     setInterval(() => {
-      if (newsPaused) return;
-      const max = newsInner.scrollHeight - newsScrollEl.clientHeight;
-      if (max <= 0) return;
-      newsScrollPos += SCROLL_SPEED;
-      if (newsScrollPos >= max) {
-        newsPaused = true;
-        setTimeout(() => { newsScrollPos = 0; newsScrollEl.scrollTop = 0; newsPaused = false; }, SCROLL_PAUSE);
-      }
-      newsScrollEl.scrollTop = newsScrollPos;
+      if (!newsContentH || newsContentH <= newsOuter.clientHeight) return;
+      newsPos += SCROLL_SPEED;
+      if (newsPos >= newsContentH) newsPos -= newsContentH;
+      newsTrack.style.transform = 'translateY(-' + newsPos + 'px)';
     }, SCROLL_TICK);
 
+    // Scores infinite scroll
     setInterval(() => {
-      if (scoresPaused) return;
-      const max = scoresInner.scrollHeight - scoresScrollEl.clientHeight;
-      if (max <= 0) return;
-      scoresScrollPos += SCROLL_SPEED;
-      if (scoresScrollPos >= max) {
-        scoresPaused = true;
-        setTimeout(() => { scoresScrollPos = 0; scoresScrollEl.scrollTop = 0; scoresPaused = false; }, SCROLL_PAUSE);
-      }
-      scoresScrollEl.scrollTop = scoresScrollPos;
+      if (!scoresContentH || scoresContentH <= scoresOuter.clientHeight) return;
+      scoresPos += SCROLL_SPEED;
+      if (scoresPos >= scoresContentH) scoresPos -= scoresContentH;
+      scoresTrack.style.transform = 'translateY(-' + scoresPos + 'px)';
     }, SCROLL_TICK);
 
-    // Hourly forecast horizontal auto-scroll
+    // Hourly horizontal auto-scroll (bounce-back is fine here per user — keep pause/reset)
     const hourlyEl = $('hourly-forecast');
     setInterval(() => {
       if (hourlyPaused) return;
       const max = hourlyEl.scrollWidth - hourlyEl.clientWidth;
       if (max <= 0) return;
-      hourlyScrollPos += SCROLL_SPEED * 0.5;
-      if (hourlyScrollPos >= max) {
+      hourlyPos += SCROLL_SPEED * 0.5;
+      if (hourlyPos >= max) {
         hourlyPaused = true;
-        setTimeout(() => { hourlyScrollPos = 0; hourlyEl.scrollLeft = 0; hourlyPaused = false; }, SCROLL_PAUSE);
+        setTimeout(() => { hourlyPos = 0; hourlyEl.scrollLeft = 0; hourlyPaused = false; }, 3000);
       }
-      hourlyEl.scrollLeft = hourlyScrollPos;
+      hourlyEl.scrollLeft = hourlyPos;
     }, SCROLL_TICK);
   }
 
   // ============ SETTINGS ============
+  function buildNewsToggles() {
+    const list = $('news-toggle-list');
+    list.innerHTML = '';
+    for (const feed of ALL_FEEDS) {
+      const on = enabledFeeds.has(feed.id);
+      const div = document.createElement('div');
+      div.className = 'news-toggle' + (on ? ' on' : '');
+      div.dataset.id = feed.id;
+      div.innerHTML =
+        '<span class="nt-icon">' + feed.icon + '</span>' +
+        '<span class="nt-name">' + esc(feed.name) + '</span>' +
+        '<span class="nt-dot"></span>';
+      div.addEventListener('click', () => {
+        if (enabledFeeds.has(feed.id)) {
+          if (enabledFeeds.size <= 1) return; // keep at least one
+          enabledFeeds.delete(feed.id);
+          div.classList.remove('on');
+        } else {
+          enabledFeeds.add(feed.id);
+          div.classList.add('on');
+        }
+      });
+      list.appendChild(div);
+    }
+  }
+
   function setupSettings() {
     $('settings-btn').addEventListener('click', () => {
       if (isLocked) return;
       zipInput.value = currentZip;
+      buildNewsToggles();
       settingsOverlay.classList.add('open');
       setTimeout(() => zipInput.focus(), 100);
     });
     $('cancel-zip-btn').addEventListener('click', closeSettings);
-    $('save-zip-btn').addEventListener('click', saveZip);
+    $('save-zip-btn').addEventListener('click', saveSettings);
     zipInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') saveZip();
+      if (e.key === 'Enter') saveSettings();
       if (e.key === 'Escape') closeSettings();
     });
     zipInput.addEventListener('input', () => {
@@ -1109,14 +1282,15 @@ html, body {
 
   function closeSettings() { settingsOverlay.classList.remove('open'); }
 
-  function saveZip() {
+  function saveSettings() {
     const v = zipInput.value.trim();
     if (/^\d{5}$/.test(v)) {
       applyZip(v);
-      location.hash = 'zip=' + v;
+      saveHash();
       closeSettings();
       fetchShabbos();
       fetchWeather();
+      fetchAllNews();
     } else {
       zipInput.style.borderColor = '#F44336';
       setTimeout(() => { zipInput.style.borderColor = '#2a2a2a'; }, 1200);
@@ -1140,10 +1314,7 @@ html, body {
       if (e.target !== unlockZone) { e.preventDefault(); e.stopPropagation(); }
     });
 
-    // Long-press to unlock
-    function startPress() {
-      lockTimer = setTimeout(unlock, 800);
-    }
+    function startPress() { lockTimer = setTimeout(unlock, 800); }
     function cancelPress() { clearTimeout(lockTimer); }
 
     unlockZone.addEventListener('touchstart', startPress, { passive: true });

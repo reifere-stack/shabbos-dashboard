@@ -1386,10 +1386,11 @@ html, body {
       orgList.appendChild(a);
     }
 
-    // Show once per calendar day — won't bother you again until tomorrow
+    // Show once per calendar day — stored in URL hash so it persists across refreshes
     const today = new Date().toDateString();
-    const lastSeen = sessionStorage.getItem('donate_seen_date');
-    const shouldShow = lastSeen !== today;
+    const hashParams = new URLSearchParams(location.hash.slice(1).replace(/zip=\d{5}/, '').replace(/feeds=[^&]+/, '').replace(/^&+|&+$/g, ''));
+    const donateSeenDate = hashParams.get('ds');
+    const shouldShow = donateSeenDate !== today;
 
     if (shouldShow) {
       setTimeout(() => overlay.classList.add('open'), 1200);
@@ -1397,8 +1398,9 @@ html, body {
 
     function closeDonate() {
       overlay.classList.remove('open');
-      // Remember dismissed for the rest of today
-      sessionStorage.setItem('donate_seen_date', today);
+      // Append ds=today to the hash without disturbing zip/feeds params
+      const h = location.hash.replace(/[&?]?ds=[^&]*/g, '');
+      location.hash = h + (h.includes('=') ? '&' : '') + 'ds=' + encodeURIComponent(today);
     }
     $('donate-close').addEventListener('click', closeDonate);
     $('donate-skip').addEventListener('click', closeDonate);
